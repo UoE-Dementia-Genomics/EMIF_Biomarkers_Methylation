@@ -63,7 +63,7 @@ PCAlm <- function( column, measure){
 } 
 
 PCAout  <- {
-      Sex    <- EMIF.PCA.out.pheno[ rownames(EMIF.betas.PCA), 'measure' ] #changed for measure being assessed
+      measure    <- EMIF.PCA.out.pheno[ rownames(EMIF.betas.PCA), 'measure' ] #changed for measure being assessed
      
       t( apply(EMIF.betas.PCA, 2, PCAlm, measure ))
    }
