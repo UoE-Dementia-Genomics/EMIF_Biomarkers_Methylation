@@ -62,6 +62,12 @@ PCAlm <- function( column, measure){
    as.numeric(summary(fit)$coeff[2,c(2,4)])
 } 
 
+PCAout  <- {
+      Sex    <- EMIF.PCA.out.pheno[ rownames(EMIF.betas.PCA), 'measure' ] #changed for measure being assessed
+     
+      t( apply(EMIF.betas.PCA, 2, PCAlm, measure ))
+   }
+
 ##Cell proportion with minfi Horvath
 library(minfi)
 library(FlowSorted.Blood.450k)
