@@ -1,0 +1,83 @@
+##Load packages and data
+library(wateRmelon)
+setwd("/mnt/data1/Bex/EMIF/Katie_Lunnon/EPIC/Only_iDats/")
+readEPIC(samples$V1,idatPath=getwd())->EMIF
+read.csv("phenoBSE.csv", header=T, row.names=)->pheno
+
+save(EMIF, file="EMIFidatsmethylumi.rda")
+
+##Sex check
+EMIF@featureData@data->FD
+
+Fmd  <- cmdscale(dist(t(exprs(EMIF)[fData(EMIF)$CHR=='X',])),2)
+Fmd.y  <- cmdscale(dist(t(exprs(EMIF)[fData(EMIF)$CHR=='Y',])),2)
+
+merge(pheno, Fmd, by = "row.names", all = TRUE)->BSEXinfo
+
+##Data check
+m_intensities<-methylated(EMIF)
+u_intensities<-unmethylated(EMIF)
+
+M.median<-apply(m_intensities, 2, median)
+U.median<-apply(u_intensities, 2, median)
+
+betas(EMIF)->EMIF.betas
+
+methylated(EMIF)->EMIF.meth
+unmethylated(EMIF)->EMIF.unmeth
+
+plot(density(DataLBBE.betas[,1], na.rm=T), ylim=c(0,4))
+
+boxplot(log(methylated(EMIF)), las=2, cex.axis=0.6 , cex=0.6)
+boxplot(log(unmethylated(EMIF)), las=2, cex.axis=0.6 , cex=0.6)
+
+##Remove low quality samples and probes
+pfilter(EMIF, perc =5)->EMIF.pf
+
+3 samples having 5 % of sites with a detection p-value greater than 0.05 were removed
+Samples removed: 201492560165_R08C01 201492560226_R05C01 201492570072_R04C01
+876 sites were removed as beadcount <3 in 5 % of samples
+3973 sites having 1 % of samples with a detection p-value greater than 0.05 were removed
+
+##Quantile Normalisation with wateRmelon
+dasen(EMIF.pf)->EMIF.pf.dasen
+
+boxplot(log(methylated(EMIF.pf.dasen)), las=2, cex.axis=0.6 , cex=0.6)
+
+betas(EMIF.pf.dasen)->EMIF.pf.dasen.betas
+
+##Principal Component Analysis
+prcomp(t(EMIF.pf.dasen.betas))->EMIF.betas.PCA
+EMIF.betas.PCA$x->EMIF.PCA.out
+merge(EMIF.PCA.out,EMIF.pheno, by="row.names")->EMIF.PCA.out.pheno
+rownames(EMIF.PCA.out.pheno)<-EMIF.PCA.out.pheno[,1]
+
+PCAlm <- function( column, measure){
+     
+   fit <- try (
+      lm( column ~ measure),
+      silent=TRUE
+   )
+   if(inherits(fit,'try-error')) return(rep(NA,8))
+   as.numeric(summary(fit)$coeff[2,c(2,4)])
+} 
+
+##Cell proportion with minfi Horvath
+library(minfi)
+library(FlowSorted.Blood.450k)
+
+targets <- read.metharray.sheet("/mnt/data1/Bex/EMIF/Katie_Lunnon/EPIC/Only_iDats/New/")
+
+RGSet <- read.metharray.exp(base = "/mnt/data1/Bex/EMIF/Katie_Lunnon/EPIC/Only_iDats", targets = targets)
+
+require(FlowSorted.Blood.450k)
+cellCounts <- estimateCellCounts(RGSet)
+
+merge(pheno, cellCounts, by="row.names")->pheno.cells
+estimateCellCounts(EMIF.pf.dasen, compositeCellType = "Blood",
+cellTypes = c("CD8T","CD4T", "NK","Bcell","Mono","Gran"),
+returnAll = TRUE, meanPlot = FALSE)
+
+
+
+
