@@ -1,0 +1,165 @@
+##Load in data
+setwd("/mnt/data1/Bex/EMIF/Katie_Lunnon/EPIC/Only_iDats/")
+load("EMIFpfdasenbetasuse.rda")
+EMIF.pf.dasen.betas.use->EMIF
+read.csv("phenoBSE.csv", header=T, row.names=)->pheno
+
+##Remove outlier measures
+measures.2<- c("Diag_num", "SNPSEX",
+   "Ttau_ASSAY_Zscore", "Local_TTAU_Abnormal", 
+   "Ptau_ASSAY_Zscore", "Local_PTAU_Abnormal", 
+   "Local_AB42_Abnormal", "Central_CSF_AB42",     
+   "Central_CSF_AB40", "Central_CSF_AB38", "AB_Zscore", 
+   "Central_CSF_AB4240ratio", "Central_CSF_ratiodich", "AMYLOIDstatus",
+   "Central_CSF_YKL40","Central_CSF_NFL", "Central_CSF_Neurogranin" 
+ )
+
+pheno[,measures.2]->pheno.bio
+
+for(i in 1:length(measures.2)){
+as.numeric(pheno.bio[,measures.2[i]])->dat
+mean(dat, na.rm=T)->mean.dat
+sd(dat, na.rm=T)->sd.dat
+mean.dat + 3*sd.dat->max.dat
+mean.dat - 3*sd.dat->min.dat
+dat[dat<=min.dat]<-NA
+dat[dat>=max.dat]<-NA
+dat->pheno.bio[,measures.2[i]]
+}
+
+ ##Set analysis model
+EMIFlm.general <- function( row, Age, Sex, Amsterdam, Antwerp, CITA, DESCRIPA, EDAR, Lausanne, Leuven, Pharmacog, 
+WG6203965, WG6203966, WG6206464, WG6206488, WG6206489, WG6206512, WG6206524, WG6206525, WG6206526, 
+GWPCA1, GWPCA2, GWPCA3, GWPCA4, CD8T, CD4T, NK, Bcell, Mono, PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, outcome){
+     
+   fit <- try (
+      lm( row ~ Age + Sex + Amsterdam + Antwerp + CITA + DESCRIPA + EDAR + Lausanne + Leuven + Pharmacog + 
+      WG6203965 + WG6203966 + WG6206464 + WG6206488 + WG6206489 + WG6206512 + WG6206524 + WG6206525 + WG6206526 + 
+      GWPCA1 + GWPCA2 + GWPCA3 + GWPCA4 + CD8T + CD4T + NK + Bcell + Mono + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + outcome),
+      silent=TRUE
+   )
+   if(inherits(fit,'try-error')) return(rep(NA,8))
+   as.numeric(summary(fit)$coeff[,c(1,4)])
+} 
+
+EMIFlm.general.diagcat <- function( row, Age, Sex, Amsterdam, Antwerp, CITA, DESCRIPA, EDAR, Lausanne, Leuven, Pharmacog, 
+WG6203965, WG6203966, WG6206464, WG6206488, WG6206489, WG6206512, WG6206524, WG6206525, WG6206526, 
+GWPCA1, GWPCA2, GWPCA3, GWPCA4, CD8T, CD4T, NK, Bcell, Mono, PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, CTLSCI, MCI, outcome){
+     
+   fit <- try (
+      lm(row ~ Age + Sex + Amsterdam + Antwerp + CITA + DESCRIPA + EDAR + Lausanne + Leuven + Pharmacog + 
+WG6203965 + WG6203966 + WG6206464 + WG6206488 + WG6206489 + WG6206512 + WG6206524 + WG6206525 + WG6206526 + 
+GWPCA1 + GWPCA2 + GWPCA3 + GWPCA4 + CD8T + CD4T + NK + Bcell + Mono + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 + 
+CTLSCI + MCI + outcome),
+      silent=TRUE
+   )
+   if(inherits(fit,'try-error')) return(rep(NA,8))
+   as.numeric(summary(fit)$coeff[,c(1,4)])
+} 
+
+
+##Analysis
+results  <- {
+
+      Sex    <- pheno[ colnames(EMIF), 'SNPSEX' ]
+      Age    <- pheno[ colnames(EMIF), 'Age' ]
+      Amsterdam <- pheno[ colnames(EMIF), 'Amsterdam' ]
+      Antwerp   <- pheno[ colnames(EMIF), 'Antwerp' ]
+      CITA    <- pheno[ colnames(EMIF), 'CITA' ]
+      EDAR    <- pheno[ colnames(EMIF), 'EDAR' ]
+      Lausanne    <- pheno[ colnames(EMIF), 'Lausanne' ]
+      Leuven    <- pheno[ colnames(EMIF), 'Leuven' ]
+      DESCRIPA    <- pheno[ colnames(EMIF), 'DESCRIPA' ]
+      Pharmacog    <- pheno[ colnames(EMIF), 'Pharmacog' ]
+      
+      CD8T    <- pheno[ colnames(EMIF), 'CD8T' ]
+      CD4T    <- pheno[ colnames(EMIF), 'CD4T' ]
+      NK    <- pheno[ colnames(EMIF), 'NK' ]
+      Bcell    <- pheno[ colnames(EMIF), 'Bcell' ]
+      Mono    <- pheno[ colnames(EMIF), 'Mono' ]
+      
+      WG6203965    <- pheno[ colnames(EMIF), 'WG6203965' ]
+      WG6203966    <- pheno[ colnames(EMIF), 'WG6203966' ]
+      WG6206464    <- pheno[ colnames(EMIF), 'WG6206464' ]
+      WG6206488    <- pheno[ colnames(EMIF), 'WG6206488' ]
+      WG6206489    <- pheno[ colnames(EMIF), 'WG6206489' ]
+      WG6206512    <- pheno[ colnames(EMIF), 'WG6206512' ]
+      WG6206524    <- pheno[ colnames(EMIF), 'WG6206524' ]
+      WG6206525    <- pheno[ colnames(EMIF), 'WG6206525' ]
+      WG6206526    <- pheno[ colnames(EMIF), 'WG6206526' ]
+
+      GWPCA1    <- pheno[ colnames(EMIF), 'GWAS.PC1' ]
+      GWPCA2    <- pheno[ colnames(EMIF), 'GWAS.PC2' ]
+      GWPCA3    <- pheno[ colnames(EMIF), 'GWAS.PC3' ]
+      GWPCA4    <- pheno[ colnames(EMIF), 'GWAS.PC4' ]
+
+      PC1    <- pheno[ colnames(EMIF), 'PC1' ]
+      PC2    <- pheno[ colnames(EMIF), 'PC2' ]
+      PC3    <- pheno[ colnames(EMIF), 'PC3' ]
+      PC4    <- pheno[ colnames(EMIF), 'PC4' ]
+      PC5    <- pheno[ colnames(EMIF), 'PC5' ]
+      PC6    <- pheno[ colnames(EMIF), 'PC6' ]
+      PC7    <- pheno[ colnames(EMIF), 'PC7' ]
+      PC8    <- pheno[ colnames(EMIF), 'PC8' ]
+      
+      outcome    <- pheno[ colnames(EMIF), 'measure' ] #Adjusted for measure currently analysing
+
+      t( apply(EMIF, 1,EMIFlm.general, Age, Sex, Amsterdam, Antwerp, CITA, DESCRIPA, EDAR, Lausanne, Leuven, Pharmacog, WG6203965, WG6203966, WG6206464, WG6206488, WG6206489, WG6206512, WG6206524, WG6206525, WG6206526, GWPCA1, GWPCA2, GWPCA3, GWPCA4, CD8T, CD4T, NK, Bcell, Mono, PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, outcome))
+   }
+
+write.csv(results, "./result.csv")
+
+result.cccat  <- {
+
+      Sex    <- pheno[ colnames(EMIF), 'SNPSEX' ]
+      Age    <- pheno[ colnames(EMIF), 'Age' ]
+      Amsterdam <- pheno[ colnames(EMIF), 'Amsterdam' ]
+      Antwerp   <- pheno[ colnames(EMIF), 'Antwerp' ]
+      CITA    <- pheno[ colnames(EMIF), 'CITA' ]
+      EDAR    <- pheno[ colnames(EMIF), 'EDAR' ]
+      Lausanne    <- pheno[ colnames(EMIF), 'Lausanne' ]
+      Leuven    <- pheno[ colnames(EMIF), 'Leuven' ]
+      DESCRIPA    <- pheno[ colnames(EMIF), 'DESCRIPA' ]
+      Pharmacog    <- pheno[ colnames(EMIF), 'Pharmacog' ]
+      
+      CD8T    <- pheno[ colnames(EMIF), 'CD8T' ]
+      CD4T    <- pheno[ colnames(EMIF), 'CD4T' ]
+      NK    <- pheno[ colnames(EMIF), 'NK' ]
+      Bcell    <- pheno[ colnames(EMIF), 'Bcell' ]
+      Mono    <- pheno[ colnames(EMIF), 'Mono' ]
+      
+      WG6203965    <- pheno[ colnames(EMIF), 'WG6203965' ]
+      WG6203966    <- pheno[ colnames(EMIF), 'WG6203966' ]
+      WG6206464    <- pheno[ colnames(EMIF), 'WG6206464' ]
+      WG6206488    <- pheno[ colnames(EMIF), 'WG6206488' ]
+      WG6206489    <- pheno[ colnames(EMIF), 'WG6206489' ]
+      WG6206512    <- pheno[ colnames(EMIF), 'WG6206512' ]
+      WG6206524    <- pheno[ colnames(EMIF), 'WG6206524' ]
+      WG6206525    <- pheno[ colnames(EMIF), 'WG6206525' ]
+      WG6206526    <- pheno[ colnames(EMIF), 'WG6206526' ]
+
+      GWPCA1    <- pheno[ colnames(EMIF), 'GWAS.PC1' ]
+      GWPCA2    <- pheno[ colnames(EMIF), 'GWAS.PC2' ]
+      GWPCA3    <- pheno[ colnames(EMIF), 'GWAS.PC3' ]
+      GWPCA4    <- pheno[ colnames(EMIF), 'GWAS.PC4' ]
+
+      PC1    <- pheno[ colnames(EMIF), 'PC1' ]
+      PC2    <- pheno[ colnames(EMIF), 'PC2' ]
+      PC3    <- pheno[ colnames(EMIF), 'PC3' ]
+      PC4    <- pheno[ colnames(EMIF), 'PC4' ]
+      PC5    <- pheno[ colnames(EMIF), 'PC5' ]
+      PC6    <- pheno[ colnames(EMIF), 'PC6' ]
+      PC7    <- pheno[ colnames(EMIF), 'PC7' ]
+      PC8    <- pheno[ colnames(EMIF), 'PC8' ]
+
+      CTLSCI <- pheno[ colnames(EMIF), 'CTLSCI' ]
+      MCI <- pheno[ colnames(EMIF), 'MCI' ]
+      
+      outcome    <- pheno[ colnames(EMIF), 'measure' ] #Adjusted for measure currently analysing
+
+      t( apply(EMIF, 1, EMIFlm.general.diagcat, Age, Sex, Amsterdam, Antwerp, CITA, DESCRIPA, EDAR, Lausanne, Leuven, Pharmacog, 
+WG6203965, WG6203966, WG6206464, WG6206488, WG6206489, WG6206512, WG6206524, WG6206525, WG6206526, 
+GWPCA1, GWPCA2, GWPCA3, GWPCA4, CD8T, CD4T, NK, Bcell, Mono, PC1, PC2, PC3, PC4, PC5, PC6, PC7, PC8, CTLSCI, MCI, outcome))
+   }
+
+write.csv(result.cccat, "./result_cccat.csv")
