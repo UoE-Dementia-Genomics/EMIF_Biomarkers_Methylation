@@ -41,7 +41,7 @@ Rebecca G. Smith<sup>1</sup>, Ehsan Pishva<sup>1,2</sup>, Morteza Kouhsar<sup>1<
   
 <sup>*</sup> Corresponding author: Katie Lunnon, University of Exeter Medical School, RILD, Barrack Road, University of Exeter, Devon, UK. UK. Tel: + 44 1392 408 298 Email address: k.lunnon@exeter.ac.uk
 
-<p><B></B>Abstract</p></p>
+#Abstract
 <p>INTRODUCTION: 
 <br>We investigated blood DNA methylation patterns associated with 15 well-established cerebrospinal fluid (CSF) biomarkers of Alzheimer’s disease (AD) pathophysiology, neuroinflammation and neurodegeneration.</p> 
 <p>METHODS:
